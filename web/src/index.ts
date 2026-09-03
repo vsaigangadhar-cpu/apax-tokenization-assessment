@@ -7,6 +7,7 @@ import connectDatabase from "./config/database";
 import errorMiddleware from "./middlewares/error";
 import activityRoutes from "./routes/activity";
 import balanceRoutes from "./routes/balance";
+import holdingRoutes from "./routes/holdings";
 import userRoutes from "./routes/users";
 
 if (!process.env.JWT_SECRET) {
@@ -28,6 +29,7 @@ app.use(express.json());
 app.use("/activity", activityRoutes);
 app.use("/balance", balanceRoutes);
 app.use("/user", userRoutes);
+app.use("/api", holdingRoutes);
 
 // Health check
 app.get("/", (req, res) => {
