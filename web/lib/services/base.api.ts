@@ -13,6 +13,8 @@ export const baseAPI = async (url: string, method: any, body?: unknown) => {
   try {
     const res = await fetch(`${baseUrl}/user${url}`, {
       method,
+      // Required for the httpOnly auth cookie to be stored and sent back.
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },

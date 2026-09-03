@@ -20,26 +20,25 @@ export default function LoginPage() {
   const [vaultOpening, setVaultOpening] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // setIsLoading(true)
-    const res = await loginApi({ email, password })
-    console.log(res)
-    //NEED TO CLEAN UP ONCE ALL DONE, didn't get time due to mongodb connection issue.
-    // Simulate authentication delay
-    // await new Promise(resolve => setTimeout(resolve, 1000))
+    setError(null)
+    setIsLoading(true)
 
-    // Trigger vault door animation
-    // setVaultOpening(true)
+    try {
+      const res = await loginApi({ email, password })
 
-    // Navigate after animation
-    // await new Promise(resolve => setTimeout(resolve, 1000))
-    // router.push('/dashboard')
-    if(res.data) {
-      router.push('/dashbaord')
-    } else {
-      alert('Something went wrong')
+      if (!res.success) {
+        setError(res.message)
+        return
+      }
+
+      // The JWT stays in the httpOnly cookie the server set; nothing to persist.
+      router.push('/dashboard')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -254,6 +253,12 @@ export default function LoginPage() {
                   </label>
                   <a href="#" className="text-[#D4AF37] hover:text-[#E6C861]">Forgot password?</a>
                 </div>
+
+                {error && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
 
                 <Button
                   type="submit"
