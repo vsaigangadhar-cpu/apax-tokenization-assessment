@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAPAXStore, formatCurrency, formatWeight } from '@/lib/store'
 
 export function PortfolioOverview() {
-  const { userHoldings, metalPrices } = useAPAXStore()
+  const { userHoldings, metalPrices, holdingsStatus, holdingsError } = useAPAXStore()
+
+  // Dim values while loading rather than unmounting the cards, which would
+  // shift the layout and read as lost data.
+  const pending = holdingsStatus === 'loading' ? 'opacity-40 animate-pulse' : ''
 
   // Calculate total portfolio value
   const goldValue = userHoldings.goldGrams * (metalPrices.gold / 31.1035)
@@ -63,7 +67,12 @@ export function PortfolioOverview() {
           </div>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="text-2xl md:text-4xl font-bold text-[#E8E8E8] tracking-tight font-vault">{formatCurrency(totalValue)}</div>
+          <div className={`text-2xl md:text-4xl font-bold text-[#E8E8E8] tracking-tight font-vault ${pending}`}>{formatCurrency(totalValue)}</div>
+          {holdingsError && (
+            <p role="alert" className="text-[10px] md:text-xs text-red-400 mt-1.5">
+              {holdingsError} — showing last known holdings
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1.5">
             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${dailyChange >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
               {dailyChange >= 0 ? (
@@ -89,7 +98,7 @@ export function PortfolioOverview() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault">{formatWeight(userHoldings.goldGrams)}</div>
+          <div className={`text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault ${pending}`}>{formatWeight(userHoldings.goldGrams)}</div>
           <p className="text-[10px] md:text-xs text-[#888888] mt-0.5 font-vault">{formatCurrency(goldValue)}</p>
         </CardContent>
       </Card>
@@ -102,7 +111,7 @@ export function PortfolioOverview() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault">{formatWeight(userHoldings.silverGrams)}</div>
+          <div className={`text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault ${pending}`}>{formatWeight(userHoldings.silverGrams)}</div>
           <p className="text-[10px] md:text-xs text-[#888888] mt-0.5 font-vault">{formatCurrency(silverValue)}</p>
         </CardContent>
       </Card>
@@ -115,7 +124,7 @@ export function PortfolioOverview() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault">{formatWeight(userHoldings.platinumGrams)}</div>
+          <div className={`text-xl md:text-2xl font-bold text-[#E8E8E8] font-vault ${pending}`}>{formatWeight(userHoldings.platinumGrams)}</div>
           <p className="text-[10px] md:text-xs text-[#888888] mt-0.5 font-vault">{formatCurrency(platinumValue)}</p>
         </CardContent>
       </Card>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { DashboardView } from '@/components/views/dashboard-view'
 import { PorView } from '@/components/views/por-view'
@@ -10,7 +11,23 @@ import { ShariaView } from '@/components/views/sharia-view'
 import { useAPAXStore } from '@/lib/store'
 
 export default function DashboardPage() {
-  const { activeView, addAuditLog } = useAPAXStore()
+  const router = useRouter()
+  const { activeView, addAuditLog, fetchHoldings } = useAPAXStore()
+
+  // Live holdings from GET /api/holdings
+  useEffect(() => {
+    let cancelled = false
+
+    fetchHoldings().then(({ unauthenticated }) => {
+      if (!cancelled && unauthenticated) {
+        router.replace('/login')
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [fetchHoldings, router])
 
   // Simulate live price updates
   useEffect(() => {

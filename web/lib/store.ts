@@ -2,7 +2,11 @@
 
 import { create } from 'zustand'
 
+import { getHoldingsApi } from './services/holdings.api'
+
 // Types
+export type HoldingsStatus = 'idle' | 'loading' | 'ready' | 'error'
+
 export interface MetalPrice {
   gold: number
   silver: number
@@ -49,7 +53,11 @@ interface APAXStore {
   // User Holdings
   userHoldings: UserHolding
   setUserHoldings: (holdings: UserHolding) => void
-  
+  holdingsStatus: HoldingsStatus
+  holdingsError: string | null
+  /** Resolves with `unauthenticated: true` when the session is missing or expired. */
+  fetchHoldings: () => Promise<{ unauthenticated: boolean }>
+
   // Vault Data
   vaultData: VaultData
   setVaultData: (data: VaultData) => void
@@ -137,6 +145,58 @@ export const useAPAXStore = create<APAXStore>((set, get) => ({
   // User Holdings
   userHoldings: initialUserHoldings,
   setUserHoldings: (holdings) => set({ userHoldings: holdings }),
+  holdingsStatus: 'idle',
+  holdingsError: null,
+  fetchHoldings: async () => {
+    set({ holdingsStatus: 'loading', holdingsError: null })
+
+    const res = await getHoldingsApi()
+
+    if (res.success) {
+      const holdings = res.data?.holdings
+
+      // A 2xx with a payload that does not match the contract is still a
+      // failure; without this the destructure below would throw.
+      if (
+        typeof holdings?.gold?.amount !== 'number' ||
+        typeof holdings?.silver?.amount !== 'number' ||
+        typeof holdings?.platinum?.amount !== 'number'
+      ) {
+        set({
+          holdingsStatus: 'error',
+          holdingsError: 'Unexpected holdings response from server',
+        })
+        return { unauthenticated: false }
+      }
+
+      const { gold, silver, platinum } = holdings
+
+      set((state) => ({
+        userHoldings: {
+          // apxiTokens is an index token, not a vaulted metal, so
+          // /api/holdings does not provide it and the existing value stands.
+          ...state.userHoldings,
+          goldGrams: gold.amount,
+          silverGrams: silver.amount,
+          platinumGrams: platinum.amount,
+        },
+        holdingsStatus: 'ready',
+        holdingsError: null,
+      }))
+
+      return { unauthenticated: false }
+    }
+
+    // No inline message for 401; the caller redirects to the login page.
+    if (res.status === 401) {
+      set({ holdingsStatus: 'error', holdingsError: null })
+      return { unauthenticated: true }
+    }
+
+    // Last known holdings are kept so the portfolio does not blank out.
+    set({ holdingsStatus: 'error', holdingsError: res.message })
+    return { unauthenticated: false }
+  },
   
   // Vault Data
   vaultData: initialVaultData,
