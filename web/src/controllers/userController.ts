@@ -8,8 +8,6 @@ import sendToken from "../utils/sendToken";
 import ErrorHandler from "../utils/errorHandler";
 import sendEmail from "../utils/sendEmail";
 
-// Environment is loaded once at the process entrypoint (src/index.ts).
-
 // Extend Request (if not using global typing yet)
 interface AuthRequest extends Request {
   user?: IUser;

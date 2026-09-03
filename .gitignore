@@ -15,9 +15,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
-# `.env*` only matches names that *begin* with ".env", so `.config.env` was not
-# covered by it and reached a public repository. `*.env` matches any name that
-# *ends* in ".env", at any depth, which closes that gap.
+# ".env*" matches only names starting with ".env" - "*.env" catches the rest
 .env*
 *.env
 
