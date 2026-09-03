@@ -32,8 +32,10 @@ export const isAuthenticatedUser = asyncErrorHandler(
 
     const user = await User.findById(decodedData.id);
 
+    // A valid token for a deleted user is an invalid session, not a missing
+    // resource; 404 here would also confirm whether an account exists.
     if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      return next(new ErrorHandler("Please Login to Access", 401));
     }
 
     req.user = user;
