@@ -1,7 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
 
 /**
@@ -81,6 +81,21 @@ userSchema.pre<IUser>("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 10);
 });
 
+
+/**
+ * Sign a JWT for this user
+ */
+userSchema.methods.getJWTToken = function (): string {
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+
+  return jwt.sign({ id: String(this._id), email: this.email }, secret, {
+    expiresIn: (process.env.JWT_EXPIRE ?? "7d") as SignOptions["expiresIn"],
+  });
+};
 
 /**
  * Compare password
