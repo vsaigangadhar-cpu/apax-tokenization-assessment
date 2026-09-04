@@ -33,23 +33,24 @@ export default defineConfig({
       type: "edr-simulated",
       chainType: "op",
     },
+    // Placeholders keep `compile` and `test` working on a fresh clone with no
+    // .env; a real deploy still needs both variables set.
     sepolia: {
       type: "http",
       chainType: "l1",
 
-      url: process.env.SEPOLIA_RPC_URL!,
+      url: process.env.SEPOLIA_RPC_URL ?? "https://rpc.sepolia.org",
 
-      accounts: [
-        process.env.SEPOLIA_PRIVATE_KEY!
-      ],
+      accounts: process.env.SEPOLIA_PRIVATE_KEY
+        ? [process.env.SEPOLIA_PRIVATE_KEY]
+        : [],
     },
   },
 
   etherscan: {
 
     apiKey: {
-      sepolia:
-        process.env.ETHERSCAN_API_KEY!
+      sepolia: process.env.ETHERSCAN_API_KEY ?? ""
     }
 
   },
