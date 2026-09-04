@@ -427,3 +427,41 @@ alone would show a burn that never happened; marking it on transaction
 submission alone would ignore the possibility of failure or reorg. Until both
 are true, the redemption stays `pending` — which is also exactly the state the
 escrow reflects on-chain.
+
+---
+
+## 8. Week One ship plan
+
+None of the following is implemented in this branch. This is what I would ship
+first to move the blockchain layer from a tested local design toward something
+running against real infrastructure.
+
+1. **Deploy to a testnet.** Deploy `ComplianceRegistry` first, then `APAXGold`
+   pointing at it, on Sepolia; verify both on Etherscan so the compliance logic
+   is publicly auditable.
+2. **Split the privileged roles immediately after deploy.** Move
+   `RECOVERY_ROLE`, `GOVERNANCE_ROLE` and `DEFAULT_ADMIN_ROLE` to a multisig,
+   give `MINTER_ROLE` to the vault operations key, keep `PAUSER_ROLE` on a
+   fast-access key, then renounce the deployer's roles — the constructor grants
+   all five to one address, which is fine for tests and wrong for staging.
+3. **Stand up an event indexer** in the Express backend for `Minted`,
+   `Transfer`, the three redemption events and `ForcedTransfer`, writing to
+   MongoDB keyed by transaction hash and log index so replays are idempotent,
+   with reorg rollback and a confirmation threshold.
+4. **Repoint `GET /api/holdings` at indexed on-chain balances** rather than the
+   independently-stored `holdings` collection, so the dashboard reads a
+   projection of chain state instead of a parallel source of truth.
+5. **Add wallet reads to the frontend** — `balanceOf`, `allowance` and
+   `decimals` via wagmi — and model transaction lifecycle
+   (`signing → pending → confirmed → failed`) separately from backend state.
+6. **Exercise the full redemption workflow end to end** on testnet: request →
+   escrow → off-chain approval → settle → burn, including the cancel path and
+   the revoked-holder case, against the real indexer rather than a local node.
+7. **Add reconciliation and monitoring** — a scheduled job comparing indexed
+   balances against `balanceOf` and `totalSupply` against custodian-reported
+   vault holdings, alerting on any divergence, plus alerts on `ForcedTransfer`
+   and `Paused`.
+8. **Run a security pass before anything touches production** — re-run the test
+   suite in CI, add Slither or an equivalent static analyser, and get an
+   external review of the role split and the redemption escrow before real
+   metal is represented on-chain.
